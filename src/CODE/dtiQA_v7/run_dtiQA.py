@@ -47,6 +47,7 @@ def main():
     parser.add_argument('--glyph_type', metavar='tensor/vector', default='tensor', help='In the QA document, visualize the tensor model either as glyphs of the full tensors or as glyphs of the principal eigenvector (default = tensor)')
     parser.add_argument('--atlas_reg_type', metavar='FA/b0', default='FA', help='Register to the JHU atlas by using the subject FA map or the subject average preprocessed b0 (default = FA)')
     parser.add_argument('--split_outputs', action='store_true', help='Split preprocessed output to match structure of input files (default = do NOT split)')
+    parser.add_argument('--save_component_pngs', action='store_true', help='Save all embedded PDF figures as separate PNG images')
     parser.add_argument('--keep_intermediates', action='store_true', help='Keep intermediate copies of data (default = do NOT keep)')
     parser.add_argument('--correct_grad', metavar='on/off', default='off', help='Perform gradient nonlinearity correction and a gradient tensor should be supplied (default = off)')
     parser.add_argument('--num_threads', metavar='N', default=1, help='Non-negative integer indicating number of threads to use when running multi-threaded steps of this pipeline (default = 1)')
@@ -817,34 +818,34 @@ def main():
 
     # Generate component PDFs
 
-    title_vis_file = vis.vis_title(dwi_files, t1_file, pe_axis, pe_dirs, readout_times, use_topup, use_synb0, params, warning_strs, vis_dir)
-    pedir_vis_file = vis.vis_pedir(dwi_checked_files, bvals_checked_files, pe_axis, pe_dirs, vis_dir)
+    title_vis_file = vis.vis_title(dwi_files, t1_file, pe_axis, pe_dirs, readout_times, use_topup, use_synb0, params, warning_strs, vis_dir, args.save_component_pngs)
+    pedir_vis_file = vis.vis_pedir(dwi_checked_files, bvals_checked_files, pe_axis, pe_dirs, vis_dir, args.save_component_pngs)
     if params['use_degibbs']:
-        degibbs_vis_file = vis.vis_degibbs(dwi_denoised_files, bvals_checked_files, dwi_degibbs_files, dwi_prenorm_gains, vis_dir)
+        degibbs_vis_file = vis.vis_degibbs(dwi_denoised_files, bvals_checked_files, dwi_degibbs_files, dwi_prenorm_gains, vis_dir, args.save_component_pngs)
     if params['use_rician']:
-        rician_vis_file = vis.vis_rician(dwi_degibbs_files, bvals_checked_files, dwi_rician_files, dwi_prenorm_gains, bvals_preproc_shelled, vis_dir)
+        rician_vis_file = vis.vis_rician(dwi_degibbs_files, bvals_checked_files, dwi_rician_files, dwi_prenorm_gains, bvals_preproc_shelled, vis_dir, args.save_component_pngs)
     if use_synb0:
-        synb0_vis_file = vis.vis_synb0(b0_d_file, t1_sform_file, b0_syn_file, vis_dir)
+        synb0_vis_file = vis.vis_synb0(b0_d_file, t1_sform_file, b0_syn_file, vis_dir, args.save_component_pngs)
     if params['use_prenormalize']:
         prenorm_label = 'Prenormalization'
     else:
         prenorm_label = 'Gain QA of Inputs'
-    prenorm_vis_file = vis.vis_norm(dwi_rician_files, dwi_prenorm_files, dwi_prenorm_gains, dwi_prenorm_bins, dwi_input_hists, dwi_prenormed_hists, prenorm_label, vis_dir)
+    prenorm_vis_file = vis.vis_norm(dwi_rician_files, dwi_prenorm_files, dwi_prenorm_gains, dwi_prenorm_bins, dwi_input_hists, dwi_prenormed_hists, prenorm_label, vis_dir, args.save_component_pngs)
     prenorm_vis_file = utils.rename_file(prenorm_vis_file, os.path.join(vis_dir, 'prenorm.pdf'))
     if params['use_postnormalize']:
-        norm_vis_file = vis.vis_norm(dwi_eddy_files, dwi_norm_files, dwi_norm_gains, dwi_norm_bins, dwi_eddy_hists, dwi_normed_hists, 'Postnormalization', vis_dir)
-    preproc_vis_file = vis.vis_preproc(dwi_checked_files, bvals_checked_files, dwi_preproc_file, bvals_preproc_file, eddy_mask_file, mask_file, percent_improbable, chisq_mask_file, vis_dir)
-    stats_vis_file = vis.vis_stats(dwi_preproc_file, bvals_preproc_file, mask_file, chisq_matrix_file, motion_dict, eddy_dir, vis_dir)
-    gradcheck_vis_file = vis.vis_gradcheck(bvals_checked_files, bvecs_checked_files, bvals_preproc_file, bvecs_preproc_file, bvals_corrected_file, bvecs_corrected_file, vis_dir)
+        norm_vis_file = vis.vis_norm(dwi_eddy_files, dwi_norm_files, dwi_norm_gains, dwi_norm_bins, dwi_eddy_hists, dwi_normed_hists, 'Postnormalization', vis_dir, args.save_component_pngs)
+    preproc_vis_file = vis.vis_preproc(dwi_checked_files, bvals_checked_files, dwi_preproc_file, bvals_preproc_file, eddy_mask_file, mask_file, percent_improbable, chisq_mask_file, vis_dir, args.save_component_pngs)
+    stats_vis_file = vis.vis_stats(dwi_preproc_file, bvals_preproc_file, mask_file, chisq_matrix_file, motion_dict, eddy_dir, vis_dir, args.save_component_pngs)
+    gradcheck_vis_file = vis.vis_gradcheck(bvals_checked_files, bvecs_checked_files, bvals_preproc_file, bvecs_preproc_file, bvals_corrected_file, bvecs_corrected_file, vis_dir, args.save_component_pngs)
     if params['use_unbias']:
-        bias_vis_file = vis.vis_bias(dwi_norm_file, bvals_norm_file, dwi_unbiased_file, bias_field_file, vis_dir)
+        bias_vis_file = vis.vis_bias(dwi_norm_file, bvals_norm_file, dwi_unbiased_file, bias_field_file, vis_dir, args.save_component_pngs)
     if params['use_grad']:
-        grad_vis_file = vis.vis_grad(bvals_unbiased_file, bvals_preproc_shelled, dwi_grad_corrected_file, resmaple_gradtensor_file, gradtensor_fa_file, mask_file, vis_dir)
-    dwi_vis_files = vis.vis_dwi(dwi_preproc_file, bvals_preproc_shelled, bvecs_preproc_file, cnr_dict, vis_dir)
-    glyph_vis_file = vis.vis_glyphs(tensor_file, v1_file, fa_file, cc_center_voxel, vis_dir, glyph_type=params['glyph_type'])
-    fa_vis_file = vis.vis_scalar(fa_file, vis_dir, name='FA', comment='White matter should be bright')
-    fa_stats_vis_file = vis.vis_fa_stats(roi_names, roi_med_fa, fa_file, atlas2subj_file, vis_dir)
-    md_vis_file = vis.vis_scalar(md_file, vis_dir, name='MD', comment='CSF should be bright')
+        grad_vis_file = vis.vis_grad(bvals_unbiased_file, bvals_preproc_shelled, dwi_grad_corrected_file, resmaple_gradtensor_file, gradtensor_fa_file, mask_file, vis_dir, args.save_component_pngs)
+    dwi_vis_files = vis.vis_dwi(dwi_preproc_file, bvals_preproc_shelled, bvecs_preproc_file, cnr_dict, vis_dir, args.save_component_pngs)
+    glyph_vis_file = vis.vis_glyphs(tensor_file, v1_file, fa_file, cc_center_voxel, vis_dir, glyph_type=params['glyph_type'], args.save_component_pngs)
+    fa_vis_file = vis.vis_scalar(fa_file, vis_dir, name='FA', comment='White matter should be bright', args.save_component_pngs)
+    fa_stats_vis_file = vis.vis_fa_stats(roi_names, roi_med_fa, fa_file, atlas2subj_file, vis_dir, args.save_component_pngs)
+    md_vis_file = vis.vis_scalar(md_file, vis_dir, name='MD', comment='CSF should be bright', args.save_component_pngs)
 
     # Combine component PDFs
 

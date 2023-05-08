@@ -6,6 +6,7 @@
 # Set Up
 
 import os
+from pathlib import Path
 from datetime import datetime
 from io import StringIO
 
@@ -20,7 +21,7 @@ from vars import SHARED_VARS
 
 # Define Visualization Functions
 
-def vis_title(dwi_files, t1_file, pe_axis, pe_dirs, readout_times, use_topup, use_synb0, params, warning_strs, vis_dir):
+def vis_title(dwi_files, t1_file, pe_axis, pe_dirs, readout_times, use_topup, use_synb0, params, warning_strs, vis_dir, save_png=False):
 
     print('RENDERING TITLE PAGE')
 
@@ -121,12 +122,16 @@ def vis_title(dwi_files, t1_file, pe_axis, pe_dirs, readout_times, use_topup, us
     plt.text(0.625, 1, inputs_str, ha='left', va='top', wrap=True, fontsize=6)
     plt.text(-0.025, 0, methods_str, ha='left', va='bottom', wrap=True, fontsize=6)
     plt.axis('off')
+
+    if save_png:
+        _imsave(plt, vis_dir, 'title', 'png')
+
     plt.savefig(title_vis_file)
     plt.close()
 
     return title_vis_file
 
-def vis_pedir(dwi_files, bvals_files, pe_axis, pe_dirs, vis_dir):
+def vis_pedir(dwi_files, bvals_files, pe_axis, pe_dirs, vis_dir, save_png=False):
 
     temp_dir = utils.make_dir(vis_dir, 'TEMP')
 
@@ -183,6 +188,9 @@ def vis_pedir(dwi_files, bvals_files, pe_axis, pe_dirs, vis_dir):
     plt.text(0, 0.5, pe_dir_info_str, ha='left', va='center', wrap=True, fontsize=SHARED_VARS.LABEL_FONTSIZE)
     txt_ax.axis('off')
 
+    if save_png:
+        _imsave(plt, vis_dir, 'pedir', 'png')
+
     pedir_vis_file = os.path.join(vis_dir, 'pedir.pdf')
     plt.savefig(pedir_vis_file, dpi=SHARED_VARS.PDF_DPI)
     plt.close()
@@ -192,7 +200,7 @@ def vis_pedir(dwi_files, bvals_files, pe_axis, pe_dirs, vis_dir):
 
     return pedir_vis_file
 
-def vis_synb0(b0_d_file, t1_file, b0_syn_file, vis_dir):
+def vis_synb0(b0_d_file, t1_file, b0_syn_file, vis_dir, save_png=False):
 
     print('VISUALIZING SYNB0-DISCO')
 
@@ -240,13 +248,16 @@ def vis_synb0(b0_d_file, t1_file, b0_syn_file, vis_dir):
     plt.subplots_adjust(top=0.925)
     plt.suptitle('Synb0-DisCo', fontsize=SHARED_VARS.TITLE_FONTSIZE)
 
+    if save_png:
+        _imsave(plt, vis_dir, 'synb0', 'png')
+
     synb0_vis_file = os.path.join(vis_dir, 'synb0.pdf')
     plt.savefig(synb0_vis_file, dpi=SHARED_VARS.PDF_DPI)
     plt.close()
 
     return synb0_vis_file
 
-def vis_preproc(dwi_files, bvals_files, dwi_preproc_file, bvals_preproc_file, eddy_mask_file, mask_file, percent_improbable, stats_mask_file, vis_dir):
+def vis_preproc(dwi_files, bvals_files, dwi_preproc_file, bvals_preproc_file, eddy_mask_file, mask_file, percent_improbable, stats_mask_file, vis_dir, save_png=False):
 
     print('VISUALIZING RAW AND PREPROCESSED DATA + MASKS')
 
@@ -334,6 +345,9 @@ def vis_preproc(dwi_files, bvals_files, dwi_preproc_file, bvals_preproc_file, ed
     plt.text(0, 0.5, mask_info_str, ha='left', va='center', wrap=True, fontsize=SHARED_VARS.LABEL_FONTSIZE)
     txt_ax.axis('off')
 
+    if save_png:
+        _imsave(plt, vis_dir, 'preproc_masks', 'png')
+
     preproc_vis_file = os.path.join(vis_dir, 'preproc_masks.pdf')
     plt.savefig(preproc_vis_file, dpi=SHARED_VARS.PDF_DPI)
     plt.close()
@@ -343,7 +357,7 @@ def vis_preproc(dwi_files, bvals_files, dwi_preproc_file, bvals_preproc_file, ed
 
     return preproc_vis_file
 
-def vis_norm(dwi_files, dwi_norm_files, gains, bins, hists, hists_normed, title, vis_dir):
+def vis_norm(dwi_files, dwi_norm_files, gains, bins, hists, hists_normed, title, vis_dir, save_png=False):
 
     print('VISUALIZING NORMALIZATION')
 
@@ -372,12 +386,15 @@ def vis_norm(dwi_files, dwi_norm_files, gains, bins, hists, hists_normed, title,
 
     plt.suptitle('{}:\nAverage b0 Intensity Distributions By Scan Within Approximate Masks'.format(title), fontsize=SHARED_VARS.TITLE_FONTSIZE)
 
+    if save_png:
+        _imsave(plt, vis_dir, 'norm', 'png')
+
     plt.savefig(norm_vis_file, dpi=SHARED_VARS.PDF_DPI)
     plt.close()
 
     return norm_vis_file
 
-def vis_bias(dwi_file, bvals_file, dwi_unbiased_file, bias_field_file, vis_dir):
+def vis_bias(dwi_file, bvals_file, dwi_unbiased_file, bias_field_file, vis_dir, save_png=False):
 
     temp_dir = utils.make_dir(vis_dir, 'TEMP')
 
@@ -439,6 +456,9 @@ def vis_bias(dwi_file, bvals_file, dwi_unbiased_file, bias_field_file, vis_dir):
     plt.subplots_adjust(top=0.925)
     plt.suptitle('N4 Bias Field Correction', fontsize=SHARED_VARS.TITLE_FONTSIZE)
 
+    if save_png:
+        _imsave(plt, vis_dir, 'bias', 'png')
+
     bias_vis_file = os.path.join(vis_dir, 'bias.pdf')
     plt.savefig(bias_vis_file, dpi=SHARED_VARS.PDF_DPI)
     plt.close()
@@ -448,7 +468,7 @@ def vis_bias(dwi_file, bvals_file, dwi_unbiased_file, bias_field_file, vis_dir):
     return bias_vis_file
 
 
-def vis_grad(bvals_file, shells, dwi_corr_file, grad_field_file, fa_grad_field_file, mask_file, vis_dir):
+def vis_grad(bvals_file, shells, dwi_corr_file, grad_field_file, fa_grad_field_file, mask_file, vis_dir, save_png=False):
 
     temp_dir = utils.make_dir(vis_dir, 'TEMP')
 
@@ -518,6 +538,9 @@ def vis_grad(bvals_file, shells, dwi_corr_file, grad_field_file, fa_grad_field_f
 
     plt.subplots_adjust(top=0.925)
     plt.suptitle('Nonlinear Gradient Field Correction', fontsize=SHARED_VARS.TITLE_FONTSIZE)
+
+    if save_png:
+        _imsave(plt, vis_dir, 'grad', 'png')
 
     grad_vis_file = os.path.join(vis_dir, 'grad.pdf')
     plt.savefig(grad_vis_file, dpi=SHARED_VARS.PDF_DPI)
@@ -591,7 +614,7 @@ def vis_degibbs(dwi_files, bvals_files, dwi_degibbs_files, gains, vis_dir):
 
     return degibbs_vis_file
 
-def vis_rician(dwi_files, bvals_files, dwi_rician_files, gains, shells, vis_dir):
+def vis_rician(dwi_files, bvals_files, dwi_rician_files, gains, shells, vis_dir, save_png=False):
 
     temp_dir = utils.make_dir(vis_dir, 'TEMP')
 
@@ -718,6 +741,9 @@ def vis_rician(dwi_files, bvals_files, dwi_rician_files, gains, shells, vis_dir)
     plt.subplots_adjust(top=0.85)
     plt.suptitle('Intramask Intensity Distributions With and Without Rician Correction\n(Intensities should decrease slightly with correction)', fontsize=SHARED_VARS.TITLE_FONTSIZE)
 
+    if save_png:
+        _imsave(plt, vis_dir, 'rician', 'png')
+
     rician_vis_file = os.path.join(vis_dir, 'rician.pdf')
     plt.savefig(rician_vis_file, dpi=SHARED_VARS.PDF_DPI)
     plt.close()
@@ -728,7 +754,7 @@ def vis_rician(dwi_files, bvals_files, dwi_rician_files, gains, shells, vis_dir)
     
     return rician_vis_file
 
-def vis_stats(dwi_file, bvals_file, mask_file, chisq_matrix_file, motion_dict, eddy_dir, vis_dir):
+def vis_stats(dwi_file, bvals_file, mask_file, chisq_matrix_file, motion_dict, eddy_dir, vis_dir, save_png=False):
 
     print('VISUALIZING MOTION AND CHI SQUARED STATISTICS')
 
@@ -870,15 +896,18 @@ def vis_stats(dwi_file, bvals_file, mask_file, chisq_matrix_file, motion_dict, e
     plt.colorbar(im, cax=cbar_ax)
 
     # Finish Up Figure
+    plt.subplots_adjust(hspace=0, wspace=0)
+
+    if save_png:
+        _imsave(plt, vis_dir, 'stats', 'png')
 
     stats_vis_file = os.path.join(vis_dir, 'stats.pdf')
-    plt.subplots_adjust(hspace=0, wspace=0)
     plt.savefig(stats_vis_file, dpi=SHARED_VARS.PDF_DPI)
     plt.close()
 
     return stats_vis_file
 
-def vis_gradcheck(bvals_files, bvecs_files, bvals_preproc_file, bvecs_preproc_file, bvals_corrected_file, bvecs_corrected_file, vis_dir):
+def vis_gradcheck(bvals_files, bvecs_files, bvals_preproc_file, bvecs_preproc_file, bvals_corrected_file, bvecs_corrected_file, vis_dir, save_png=False):
 
     temp_dir = utils.make_dir(vis_dir, 'TEMP')
 
@@ -923,6 +952,9 @@ def vis_gradcheck(bvals_files, bvecs_files, bvals_preproc_file, bvecs_preproc_fi
     info_str = '- Original: Raw gradients (b-vectors scaled by b-value) given as input.\n- Preprocessed: Gradients output and rotated by eddy. Often slightly different than the original gradients.\n- Preprocessed + Optimized: Preprocessed gradients that have been sign and order permuted to produce the optimal tract length as determined by dwigradcheck in MRTrix3. Ideally identical to the preprocessed gradients. If not, this suggests an incorrect sign or axis permutation in the b-vectors. Tensor or vector glyph visualization in this PDF can help support this.'
     plt.text(0, 0, info_str, ha='left', va='bottom', wrap=True, fontsize=SHARED_VARS.LABEL_FONTSIZE)
     plt.axis('off')
+
+    if save_png:
+        _imsave(plt, vis_dir, 'gradcheck', 'png')
 
     plt.savefig(gradcheck_vis_file, dpi=SHARED_VARS.PDF_DPI)
     plt.close()
@@ -1023,7 +1055,7 @@ def vis_fa_stats(roi_names, roi_med_fa, fa_file, atlas_ants_fa_file, vis_dir):
 
     return fa_stats_vis_file
 
-def vis_glyphs(tensor_file, v1_file, fa_file, cc_center_voxel, vis_dir, glyph_type='tensor'):
+def vis_glyphs(tensor_file, v1_file, fa_file, cc_center_voxel, vis_dir, glyph_type='tensor', save_png=False):
 
     print('VISUALIZING TENSORS')
 
@@ -1111,6 +1143,10 @@ def vis_glyphs(tensor_file, v1_file, fa_file, cc_center_voxel, vis_dir, glyph_ty
     plt.tight_layout()
 
     plt.suptitle('{} (Non-physiologic Eigenvalues Omitted)'.format(glyph_title_str), fontsize=SHARED_VARS.TITLE_FONTSIZE)
+
+    if save_png:
+        _imsave(plt, vis_dir, 'glyphs', 'png')
+
     plt.savefig(glyph_vis_file, dpi=SHARED_VARS.PDF_DPI)
     plt.close()
 
@@ -1214,7 +1250,7 @@ def _methods_strs(use_topup, use_synb0, params):
 
     return s, r
 
-def _vis_vol(slices, vox_dim, min, max, vis_dir, name='?', comment='', colorbar=False):
+def _vis_vol(slices, vox_dim, min, max, vis_dir, name='?', comment='', colorbar=False, save_png=False):
 
     title = name.replace('_', ' ')
     if not comment == '':
@@ -1265,6 +1301,9 @@ def _vis_vol(slices, vox_dim, min, max, vis_dir, name='?', comment='', colorbar=
         plt.subplots_adjust(right=0.85)
         cbar_ax = fig.add_axes([0.875, 0.1, 0.025, 0.8])
         plt.colorbar(im, cax=cbar_ax)
+
+    if save_png:
+        _imsave(plt, vis_dir, name, 'png')
 
     vis_file = os.path.join(vis_dir, '{}.pdf'.format(name))
     plt.savefig(vis_file, dpi=SHARED_VARS.PDF_DPI)
@@ -1325,3 +1364,11 @@ def _filter_bad_adc(glyph_file, bad_adc3d_nii, filter_dir):
     utils.save_nii(glyph_filtered_img, glyph_aff, glyph_filtered_file)
 
     return glyph_filtered_file
+
+def _imsave(plt, vis_dir, base, format):
+    dirname = os.path.join(vis_dir, format)
+    os.makedirs(dirname, exist_ok=True)
+    base = base.rstrip('.')
+    saveto = os.path.join(dirname, f'{base}.{format}'
+    print('saving figure as {saveto}')
+    plt.savefig(saveto)
