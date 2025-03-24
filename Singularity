@@ -21,9 +21,9 @@ From: ubuntu:18.04
     # Install MRTrix3
     apt-get -y install git g++ python python-numpy libeigen3-dev zlib1g-dev libqt4-opengl-dev libgl1-mesa-dev libfftw3-dev libtiff5-dev python3-distutils
     cd APPS
-    git clone https://github.com/MRtrix3/mrtrix3.git
+    git clone https://github.com/harvard-nrg/mrtrix3
     cd mrtrix3
-    git checkout 3.0.3
+    git checkout nrg-edit
     ./configure
     ./build
     cd /
@@ -33,7 +33,7 @@ From: ubuntu:18.04
     #wget -O /INSTALLERS/fslinstaller.py "https://fsl.fmrib.ox.ac.uk/fsldownloads/fslinstaller.py"
     wget -O /INSTALLERS/fslinstaller.py "https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FslInstallation?action=AttachFile&do=get&target=fslinstaller.py"
     cd /INSTALLERS
-    python fslinstaller.py -d /APPS/fsl -V 6.0.4
+    python fslinstaller.py -d /APPS/fsl -V 6.0.7.16
     cd /
     
     # Install Convert3D (stable build 1.0.0)
@@ -103,9 +103,8 @@ From: ubuntu:18.04
     cd /
     apt-get -y install wget git gcc libpq-dev python-dev python-pip python3 python3.8 python3.8-venv python3.8-dev python3-dev python3-pip python3-venv python3-wheel libpng-dev libfreetype6-dev libblas3 liblapack3 libblas-dev liblapack-dev pkg-config
     cd /INSTALLERS
-    git clone https://github.com/MASILab/PreQual.git
+    git clone https://github.com/harvard-nrg/PreQual.git
     cd PreQual
-    git checkout v1.1.0
     mv src/APPS/* /APPS
     mv src/CODE/* /CODE
     mv src/SUPPLEMENTAL/* /SUPPLEMENTAL
