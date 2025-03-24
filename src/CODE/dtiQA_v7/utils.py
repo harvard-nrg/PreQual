@@ -359,6 +359,8 @@ def dwi_degibbs(dwi_file, degibbs_dir):
     return dwi_degibbs_file, degibbs_warning_str
 
 def dwi_unbias(dwi_file, bvals_file, bvecs_file, unbias_dir):
+    
+    print(f'Inside dwi_unbias function in utils.py: {os.getcwd()}')
 
     temp_dir = make_dir(unbias_dir, 'TEMP')
 
@@ -375,11 +377,13 @@ def dwi_unbias(dwi_file, bvals_file, bvecs_file, unbias_dir):
 
     unbias_cmd = 'dwibiascorrect ants {} {} -fslgrad {} {} -mask {} -bias {} -scratch {} -force -nthreads {}'.format(
         dwi_file, dwi_unbiased_file, bvecs_file, bvals_file, mask_file, bias_field_file, temp_dir, SHARED_VARS.NUM_THREADS-1)
-    run_cmd(unbias_cmd)
-
+    #run_cmd(unbias_cmd)
+    process = subprocess.Popen(unbias_cmd, shell=True, stdout=subprocess.PIPE)
+    process.communicate()
+    
     print('FINISHED UNBIASING {}'.format(dwi_prefix))
 
-    remove_dir(temp_dir)
+    #remove_dir(temp_dir)
 
     return dwi_unbiased_file, bias_field_file
 

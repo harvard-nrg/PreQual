@@ -9,6 +9,7 @@ import sys
 import os
 import argparse as ap
 import time
+import tempfile
 
 import numpy as np
 
@@ -37,7 +38,7 @@ def main():
     parser.add_argument('--synb0', metavar='raw/stripped/off', default='raw', help='Run topup with a synthetic b0 generated with Synb0-DisCo if no reverse phase encoded images are supplied and a raw or skull stripped T1 is supplied (default = raw)')
     parser.add_argument('--topup_first_b0s_only', action='store_true', help='Run topup with only the first b0 of each image when images have >1 b0 volume (default = run with ALL b0 volumes)')
     parser.add_argument('--extra_topup_args', metavar='string', default='', help='Extra arguments to pass to topup as a list separated by +\'s with no spaces (i.e., --extra_topup_args=--scale=1+--regrid=0)')
-    parser.add_argument('--eddy_cuda', metavar='8.0/9.1/off', default='off', help='Run eddy with CUDA 8.0 or 9.1 or without GPU acceleration and with OPENMP only (default = off)')
+    parser.add_argument('--eddy_cuda', metavar='8.0/9.1/10.2/off', default='off', help='Run eddy with CUDA 8.0, 9.1, 10.2 or without GPU acceleration and with OPENMP only (default = off)')
     parser.add_argument('--eddy_mask', metavar='on/off', default='on', help='Use a brain mask for eddy (default = on)')
     parser.add_argument('--eddy_bval_scale', metavar='N/off', default='off', help='Positive number with which to scale b-values for eddy only in order to perform distortion correction on super low shells (default = off)')
     parser.add_argument('--extra_eddy_args', metavar='string', default='', help='Extra arguments to pass to eddy as a list separated by +\'s with no spaces (i.e., --extra_eddy_args=--data_is_shelled+--ol_nstd=1)')
@@ -56,6 +57,8 @@ def main():
     parser.add_argument('--session', metavar='string', default='sess', help='Session ID (default = sess)')
     args = parser.parse_args()
 
+    print(f'Starting prequal here: {os.getcwd()}')
+    print(f'output of tempfile.gettempdir(): {tempfile.gettempdir()}') 
     # START PIPELINE
 
     print('***********************************')
@@ -151,6 +154,8 @@ def main():
         params['eddy_cuda_version'] = 8.0
     elif args.eddy_cuda == '9.1':
         params['eddy_cuda_version'] = 9.1
+    elif args.eddy_cuda == '10.2':
+        params['eddy_cuda_version'] = 10.2
     elif args.eddy_cuda == 'off':
         params['eddy_cuda_version'] = 0
     else:
@@ -818,34 +823,38 @@ def main():
 
     # Generate component PDFs
 
-    title_vis_file = vis.vis_title(dwi_files, t1_file, pe_axis, pe_dirs, readout_times, use_topup, use_synb0, params, warning_strs, vis_dir, args.save_component_pngs)
-    pedir_vis_file = vis.vis_pedir(dwi_checked_files, bvals_checked_files, pe_axis, pe_dirs, vis_dir, args.save_component_pngs)
+    title_vis_file = vis.vis_title(dwi_files, t1_file, pe_axis, pe_dirs, readout_times, use_topup, use_synb0, params, warning_strs, vis_dir, save_png=args.save_component_pngs)
+    pedir_vis_file = vis.vis_pedir(dwi_checked_files, bvals_checked_files, pe_axis, pe_dirs, vis_dir, save_png=args.save_component_pngs)
     if params['use_degibbs']:
-        degibbs_vis_file = vis.vis_degibbs(dwi_denoised_files, bvals_checked_files, dwi_degibbs_files, dwi_prenorm_gains, vis_dir, args.save_component_pngs)
+        degibbs_vis_file = vis.vis_degibbs(dwi_denoised_files, bvals_checked_files, dwi_degibbs_files, dwi_prenorm_gains, vis_dir, save_png=args.save_component_pngs)
     if params['use_rician']:
-        rician_vis_file = vis.vis_rician(dwi_degibbs_files, bvals_checked_files, dwi_rician_files, dwi_prenorm_gains, bvals_preproc_shelled, vis_dir, args.save_component_pngs)
+        rician_vis_file = vis.vis_rician(dwi_degibbs_files, bvals_checked_files, dwi_rician_files, dwi_prenorm_gains, bvals_preproc_shelled, vis_dir, save_png=args.save_component_pngs)
     if use_synb0:
-        synb0_vis_file = vis.vis_synb0(b0_d_file, t1_sform_file, b0_syn_file, vis_dir, args.save_component_pngs)
+        synb0_vis_file = vis.vis_synb0(b0_d_file, t1_sform_file, b0_syn_file, vis_dir, save_png=args.save_component_pngs)
     if params['use_prenormalize']:
         prenorm_label = 'Prenormalization'
     else:
         prenorm_label = 'Gain QA of Inputs'
-    prenorm_vis_file = vis.vis_norm(dwi_rician_files, dwi_prenorm_files, dwi_prenorm_gains, dwi_prenorm_bins, dwi_input_hists, dwi_prenormed_hists, prenorm_label, vis_dir, args.save_component_pngs)
+    prenorm_vis_file = vis.vis_norm(dwi_rician_files, dwi_prenorm_files, dwi_prenorm_gains, dwi_prenorm_bins, dwi_input_hists, dwi_prenormed_hists, prenorm_label, vis_dir, save_png=args.save_component_pngs)
     prenorm_vis_file = utils.rename_file(prenorm_vis_file, os.path.join(vis_dir, 'prenorm.pdf'))
     if params['use_postnormalize']:
-        norm_vis_file = vis.vis_norm(dwi_eddy_files, dwi_norm_files, dwi_norm_gains, dwi_norm_bins, dwi_eddy_hists, dwi_normed_hists, 'Postnormalization', vis_dir, args.save_component_pngs)
-    preproc_vis_file = vis.vis_preproc(dwi_checked_files, bvals_checked_files, dwi_preproc_file, bvals_preproc_file, eddy_mask_file, mask_file, percent_improbable, chisq_mask_file, vis_dir, args.save_component_pngs)
-    stats_vis_file = vis.vis_stats(dwi_preproc_file, bvals_preproc_file, mask_file, chisq_matrix_file, motion_dict, eddy_dir, vis_dir, args.save_component_pngs)
-    gradcheck_vis_file = vis.vis_gradcheck(bvals_checked_files, bvecs_checked_files, bvals_preproc_file, bvecs_preproc_file, bvals_corrected_file, bvecs_corrected_file, vis_dir, args.save_component_pngs)
+        norm_vis_file = vis.vis_norm(dwi_eddy_files, dwi_norm_files, dwi_norm_gains, dwi_norm_bins, dwi_eddy_hists, dwi_normed_hists, 'Postnormalization', vis_dir, save_png=args.save_component_pngs)
+    preproc_vis_file = vis.vis_preproc(dwi_checked_files, bvals_checked_files, dwi_preproc_file, bvals_preproc_file, eddy_mask_file, mask_file, percent_improbable, chisq_mask_file, vis_dir, save_png=args.save_component_pngs)
+    stats_vis_file = vis.vis_stats(dwi_preproc_file, bvals_preproc_file, mask_file, chisq_matrix_file, motion_dict, eddy_dir, vis_dir, save_png=args.save_component_pngs)
+    try:
+        gradcheck_vis_file = vis.vis_gradcheck(bvals_checked_files, bvecs_checked_files, bvals_preproc_file, bvecs_preproc_file, bvals_corrected_file, bvecs_corrected_file, vis_dir, save_png=args.save_component_pngs)  
+    except:
+        bvals_corrected_file, bvecs_corrected_file = stats.gradcheck(dwi_preproc_file, bvals_preproc_file, bvecs_preproc_file, mask_file, opt_dir)
+        gradcheck_vis_file = vis.vis_gradcheck(bvals_checked_files, bvecs_checked_files, bvals_preproc_file, bvecs_preproc_file, bvals_corrected_file, bvecs_corrected_file, vis_dir, save_png=args.save_component_pngs)
     if params['use_unbias']:
-        bias_vis_file = vis.vis_bias(dwi_norm_file, bvals_norm_file, dwi_unbiased_file, bias_field_file, vis_dir, args.save_component_pngs)
+        bias_vis_file = vis.vis_bias(dwi_norm_file, bvals_norm_file, dwi_unbiased_file, bias_field_file, vis_dir, save_png=args.save_component_pngs)
     if params['use_grad']:
-        grad_vis_file = vis.vis_grad(bvals_unbiased_file, bvals_preproc_shelled, dwi_grad_corrected_file, resmaple_gradtensor_file, gradtensor_fa_file, mask_file, vis_dir, args.save_component_pngs)
-    dwi_vis_files = vis.vis_dwi(dwi_preproc_file, bvals_preproc_shelled, bvecs_preproc_file, cnr_dict, vis_dir, args.save_component_pngs)
-    glyph_vis_file = vis.vis_glyphs(tensor_file, v1_file, fa_file, cc_center_voxel, vis_dir, glyph_type=params['glyph_type'], args.save_component_pngs)
-    fa_vis_file = vis.vis_scalar(fa_file, vis_dir, name='FA', comment='White matter should be bright', args.save_component_pngs)
-    fa_stats_vis_file = vis.vis_fa_stats(roi_names, roi_med_fa, fa_file, atlas2subj_file, vis_dir, args.save_component_pngs)
-    md_vis_file = vis.vis_scalar(md_file, vis_dir, name='MD', comment='CSF should be bright', args.save_component_pngs)
+        grad_vis_file = vis.vis_grad(bvals_unbiased_file, bvals_preproc_shelled, dwi_grad_corrected_file, resmaple_gradtensor_file, gradtensor_fa_file, mask_file, vis_dir, save_png=args.save_component_pngs)
+    dwi_vis_files = vis.vis_dwi(dwi_preproc_file, bvals_preproc_shelled, bvecs_preproc_file, cnr_dict, vis_dir, save_png=args.save_component_pngs)
+    glyph_vis_file = vis.vis_glyphs(tensor_file, v1_file, fa_file, cc_center_voxel, vis_dir, glyph_type=params['glyph_type'], save_png=args.save_component_pngs)
+    fa_vis_file = vis.vis_scalar(fa_file, vis_dir, name='FA', comment='White matter should be bright', save_png=args.save_component_pngs)
+    fa_stats_vis_file = vis.vis_fa_stats(roi_names, roi_med_fa, fa_file, atlas2subj_file, vis_dir, save_png=args.save_component_pngs)
+    md_vis_file = vis.vis_scalar(md_file, vis_dir, name='MD', comment='CSF should be bright', save_png=args.save_component_pngs)
 
     # Combine component PDFs
 
@@ -1012,4 +1021,5 @@ def main():
     return pdf_file
 
 if __name__ == '__main__':
+    print('first things first')
     main()

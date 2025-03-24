@@ -10,7 +10,9 @@ import os
 import nibabel as nib
 import numpy as np
 from scipy import ndimage
+import shutil
 
+import subprocess
 import utils
 from vars import SHARED_VARS
 
@@ -376,11 +378,13 @@ def gradcheck(dwi_file, bvals_file, bvecs_file, mask_file, corr_dir):
         print('CORRECTED BVECS FILE ALREADY EXISTS, COMPENSATING FOR DWIGRADCHECK BUG (FAILS TO OVERWRITE)')
         utils.remove_file(corrected_bvecs_file)
 
-    gradcheck_cmd = 'dwigradcheck {} -fslgrad {} {} -export_grad_fsl {} {} -mask {} -scratch {} -force -nthreads {}'.format(dwi_file, bvecs_file, bvals_file, corrected_bvecs_file, corrected_bvals_file, mask_file, temp_dir, SHARED_VARS.NUM_THREADS-1)
-    utils.run_cmd(gradcheck_cmd)
-
-    print('CLEANING UP TEMP DIRECTORY')
-    utils.remove_dir(temp_dir)
+    gradcheck_cmd = 'dwigradcheck {} -fslgrad {} {} -export_grad_fsl {} {} -mask {} -scratch {} -force -nthreads {} -nocleanup'.format(dwi_file, bvecs_file, bvals_file, corrected_bvecs_file, corrected_bvals_file, mask_file, temp_dir, SHARED_VARS.NUM_THREADS-1)
+    #utils.run_cmd(gradcheck_cmd)
+    process = subprocess.Popen(gradcheck_cmd, shell=True, stdout=subprocess.PIPE)
+    process.communicate()
+    
+    #print('CLEANING UP TEMP DIRECTORY')
+    #utils.remove_dir(temp_dir)
 
     return corrected_bvals_file, corrected_bvecs_file
 
